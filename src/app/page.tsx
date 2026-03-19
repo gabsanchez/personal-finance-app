@@ -1,7 +1,7 @@
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">Personal Finance</h1>
+      <h1 className="text-4xl font-bold">Pocket Detective</h1>
       <p className="mt-4 text-muted-foreground">Track your expenses and budget</p>
     </main>
   );

@@ -1,0 +1,42 @@
+{
+  "common": {
+    "appName": "Pocket Detective",
+    "or": "or"
+  },
+  "auth": {
+    "signup": {
+      "title": "Create an account",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "language": "Preferred language",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "continueWith": "Or continue with",
+      "google": "Google"
+    },
+    "signin": {
+      "title": "Sign in",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "continueWith": "Or continue with",
+      "google": "Google"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailExists": "Email is already registered",
+      "passwordMismatch": "Passwords don't match",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish"
+  }
+}
