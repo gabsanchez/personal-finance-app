@@ -1,11 +1,9 @@
 name: Setup
-description: Checkout, install Node.js, install dependencies, and generate Prisma client
+description: Install Node.js, install dependencies, and generate Prisma client
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
-
     - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
