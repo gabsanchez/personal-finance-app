@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  CASH
+  CHECKING
+  SAVINGS
+  CREDIT
+  INVESTMENT
+}
+
+enum CategoryKind {
+  EXPENSE
+  INCOME
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model Account {
+  id                  String      @id @default(uuid()) @db.Uuid
+  userId              String      @db.Uuid
+  name                String
+  type                AccountType
+  currency            String      @db.Char(3)
+  openingBalanceCents BigInt      @default(0)
+  archived            Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId, archived])
+  @@index([userId, type])
+}
+
+model Category {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String?      @db.Uuid
+  name      String
+  kind      CategoryKind
+  parentId  String?      @db.Uuid
+  archived  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent       Category?     @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[]    @relation("CategoryParent")
+  transactions Transaction[]
+  budgets      Budget[]
+
+  // Unicidad por usuario/kind/nombre (ojo: si userId es null = "system", Postgres permite múltiples nulls)
+  @@unique([userId, kind, name])
+  @@index([userId, kind])
+  @@index([parentId])
+}
+
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @db.Uuid
+  accountId   String          @db.Uuid
+  categoryId  String?         @db.Uuid
+  type        TransactionType
+  amountCents BigInt
+  currency    String          @db.Char(3)
+  occurredAt  DateTime        @db.Timestamptz(6)
+  description String          @default("")
+  merchant    String?
+  notes       String?
+  transferId  String?         @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([accountId, occurredAt(sort: Desc)])
+  @@index([categoryId, occurredAt(sort: Desc)])
+  @@index([userId, transferId])
+
+  // Opcional: útil para evitar duplicados por import (ajústalo a tu gusto)
+  // @@unique([userId, accountId, occurredAt, amountCents, description])
+}
+
+model Budget {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  categoryId  String   @db.Uuid
+  month       DateTime @db.Date
+  amountCents BigInt
+  currency    String   @db.Char(3)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month])
+  @@index([userId, month])
+}
+
