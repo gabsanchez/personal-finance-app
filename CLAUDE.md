@@ -4,52 +4,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Stack
 
-- **Language:** TypeScript (via `ts-node`)
-- **ORM:** Prisma 6 with PostgreSQL
-- **Runtime:** Node.js
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **ORM:** Prisma 7 with PostgreSQL (Neon serverless)
+- **Styling:** Tailwind CSS v4 + shadcn/ui
 
 ## Environment
 
-Requires a `DATABASE_URL` environment variable pointing to a PostgreSQL instance. Create a `.env` file at the project root:
-
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/personal_finance"
-```
+Requires a `DATABASE_URL` environment variable. The `.env` file at the project root is already configured for the AWS RDS instance.
 
 ## Common Commands
 
 ```bash
-# Run a TypeScript file directly
-npx ts-node src/path/to/file.ts
+# Development
+npm run dev       # Start Next.js dev server
+npm run build     # Production build
+npm run lint      # Run ESLint
 
-# Prisma: generate client after schema changes
-npx prisma generate
-
-# Prisma: create and apply a migration
-npx prisma migrate dev --name <migration-name>
-
-# Prisma: apply migrations in production
-npx prisma migrate deploy
-
-# Prisma: open the Prisma Studio GUI
-npx prisma studio
-
-# Prisma: reset DB and re-run all migrations (destructive)
-npx prisma migrate reset
+# Prisma
+npx prisma generate                        # Regenerate client after schema changes
+npx prisma migrate dev --name <name>       # Create and apply a migration
+npx prisma migrate deploy                  # Apply migrations in production
+npx prisma studio                          # Open Prisma Studio GUI
+npx prisma migrate reset                   # Reset DB and re-run all migrations (destructive)
 ```
+
+## Architecture
+
+### Key directories
+- `app/` — Next.js App Router pages and layouts
+- `components/ui/` — shadcn/ui primitives (auto-generated, don't edit directly)
+- `lib/prisma.ts` — Prisma client singleton (import this everywhere, never instantiate directly)
+
+### Adding shadcn components
+```bash
+npx shadcn@latest add <component>   # e.g. npx shadcn@latest add card
+```
+
+### Prisma config note
+The datasource URL is **not** in `prisma/schema.prisma` (Prisma 7 removed it). Instead:
+- Migrations: configured in `prisma.config.ts` via `datasource.url`
+- Runtime: `lib/prisma.ts` passes a `PrismaNeon` adapter with `process.env.DATABASE_URL` to the `PrismaClient` constructor
 
 ## Data Model
 
 All monetary values are stored as **cents (`BigInt`)** — never floats. Currency is a 3-char ISO code (e.g., `"USD"`).
 
-**Core models and their relationships:**
+**Core models:**
 
 - `User` owns everything — all other models cascade-delete when a user is deleted.
-- `Account` — a financial account (cash, checking, savings, credit, investment) belonging to a user. Balances are derived from transactions starting at `openingBalanceCents`.
-- `Category` — hierarchical (self-referential via `parentId`), scoped per user. `userId = null` means a system-level category shared across users. Unique per `(userId, kind, name)`.
-- `Transaction` — the primary financial event. Type is `EXPENSE`, `INCOME`, or `TRANSFER`. Transfers link two transactions via a shared `transferId` UUID.
+- `Account` — a financial account (cash, checking, savings, credit, investment). Balances are derived from transactions starting at `openingBalanceCents`.
+- `Category` — hierarchical (self-referential via `parentId`), scoped per user. `userId = null` means a system-level category. Unique per `(userId, kind, name)`.
+- `Transaction` — type is `EXPENSE`, `INCOME`, or `TRANSFER`. Transfers link two transactions via a shared `transferId` UUID.
 - `Budget` — monthly spending target per category, unique per `(userId, categoryId, month)`.
-
-## Prisma Config
-
-`prisma.config.ts` uses the `defineConfig` API (Prisma 6+). The schema lives at `prisma/schema.prisma` and migrations at `prisma/migrations/`. The datasource URL is read from the `DATABASE_URL` env var at runtime.
