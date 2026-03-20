@@ -21,14 +21,18 @@ export async function createCategory(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Name is required" };
 
-  const existing = await prisma.category.findFirst({
-    where: { userId: session.user.id, kind: "EXPENSE", name },
-  });
-  if (existing) return { error: "Category already exists" };
+  try {
+    const existing = await prisma.category.findFirst({
+      where: { userId: session.user.id, kind: "EXPENSE", name },
+    });
+    if (existing) return { error: "Category already exists" };
 
-  await prisma.category.create({
-    data: { name, kind: "EXPENSE", userId: session.user.id },
-  });
+    await prisma.category.create({
+      data: { name, kind: "EXPENSE", userId: session.user.id },
+    });
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
 
   revalidatePath("/categories");
   return { success: true };
@@ -41,20 +45,24 @@ export async function updateCategory(id: string, formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Name is required" };
 
-  const category = await prisma.category.findFirst({
-    where: { id, userId: session.user.id },
-  });
-  if (!category) return { error: "Category not found" };
+  try {
+    const category = await prisma.category.findFirst({
+      where: { id, userId: session.user.id },
+    });
+    if (!category) return { error: "Category not found" };
 
-  const duplicate = await prisma.category.findFirst({
-    where: { userId: session.user.id, kind: "EXPENSE", name, id: { not: id } },
-  });
-  if (duplicate) return { error: "Category already exists" };
+    const duplicate = await prisma.category.findFirst({
+      where: { userId: session.user.id, kind: "EXPENSE", name, id: { not: id } },
+    });
+    if (duplicate) return { error: "Category already exists" };
 
-  await prisma.category.update({
-    where: { id },
-    data: { name },
-  });
+    await prisma.category.update({
+      where: { id },
+      data: { name },
+    });
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
 
   revalidatePath("/categories");
   return { success: true };
@@ -64,15 +72,19 @@ export async function deleteCategory(id: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const category = await prisma.category.findFirst({
-    where: { id, userId: session.user.id },
-  });
-  if (!category) return { error: "Category not found" };
+  try {
+    const category = await prisma.category.findFirst({
+      where: { id, userId: session.user.id },
+    });
+    if (!category) return { error: "Category not found" };
 
-  await prisma.category.update({
-    where: { id },
-    data: { archived: true },
-  });
+    await prisma.category.update({
+      where: { id },
+      data: { archived: true },
+    });
+  } catch {
+    return { error: "Something went wrong. Please try again." };
+  }
 
   revalidatePath("/categories");
   return { success: true };

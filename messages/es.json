@@ -52,6 +52,12 @@
       "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
     }
   },
+  "error": {
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "home": "Ir al inicio"
+  },
   "languages": {
     "en": "Inglés",
     "es": "Español"
